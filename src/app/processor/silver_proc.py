@@ -1,171 +1,117 @@
-"""Silver processor module."""
+"""Fraud detection processor."""
 
-import logging
-from pathlib import Path
 import datetime
+import json
+import logging
+import asyncio
+
 import polars as pl
 
-logging.basicConfig(
-    format="{asctime} - {levelname} - {message}",
-    style="{",
-    datefmt="%Y-%m-%d %H:%M",
-    level=logging.INFO,
-)
+from app.llm import OllamaClient
+from app.models.fraud import FraudScore
 
 logger = logging.getLogger(__name__)
 
-pl.Config.set_tbl_rows(1000)
-pl.Config.set_tbl_cols(1000)
-pl.Config.set_fmt_str_lengths(1000)
-pl.Config.set_tbl_width_chars(1000)
+llm_client = OllamaClient()
 
 
-def get_project_root() -> Path:
-    """Get project root path."""
-    return Path(__file__).resolve().parent.parent.parent
+async def process_fraud(user_id: str):
+    """Process fraud detection for a user."""
+    logger.info("Processing fraud for user: %s", user_id)
+
+    # 1. Gather historical data from Bronze layer
+    # Note: In a real production system, you might query a state store or a fast serving layer
+    # Here we query the Delta tables directly for simplicity
+
+    try:
+        # Load recent history (last 30 days usually, but here all for demo)
+        df_logins = _load_table("lakehouse/bronze/login", user_id)
+        df_buys = _load_table("lakehouse/bronze/buy", user_id)
+        df_scrolls = _load_table("lakehouse/bronze/scroll", user_id)
+        df_orders = _load_table("lakehouse/bronze/order", user_id)
+
+        # Prepare context for LLM
+        context = {
+            "user_id": user_id,
+            "logins": df_logins.to_dicts() if not df_logins.is_empty() else [],
+            "buys": df_buys.to_dicts() if not df_buys.is_empty() else [],
+            "scrolls": df_scrolls.to_dicts() if not df_scrolls.is_empty() else [],
+            "orders": df_orders.to_dicts() if not df_orders.is_empty() else [],
+        }
+
+        prompt = _build_fraud_prompt(context)
+
+        # Call LLM
+        # We run this in a thread pool to avoid blocking the async event loop
+        response_json = await asyncio.to_thread(llm_client.generate, prompt)
+
+        if response_json:
+            try:
+                result = json.loads(response_json)
+                score = result.get("fraud_probability", 0.0)
+                reason = result.get("reason", "No reason provided")
+
+                fraud_score = FraudScore(
+                    user_id=user_id,
+                    timestamp=datetime.datetime.now(datetime.timezone.utc),
+                    score=score,
+                    reason=reason,
+                )
+
+                # Write to Gold layer
+                _write_fraud_score(fraud_score)
+
+            except json.JSONDecodeError:
+                logger.error("Failed to parse LLM response: %s", response_json)
+
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        logger.error("Error processing fraud for user %s: %s", user_id, e)
 
 
-# join_key_date = pl.date(2025, 1, 27)
-join_key_monday_date = datetime.date.today() - datetime.timedelta(
-    days=datetime.date.today().weekday()
-)
-logging.info(join_key_monday_date)
+def _load_table(path: str, user_id: str) -> pl.DataFrame:
+    """Load data from Delta table filtered by user_id."""
+    try:
+        return pl.read_delta(path).filter(pl.col("user_id") == user_id)
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        logger.warning("Error loading table %s: %s", path, e)
+        return pl.DataFrame()
 
-WRITE_SILVER = True
 
-delta_write_options = {"partition_by": "monday_of_week"}
+def _write_fraud_score(score: FraudScore):
+    """Write fraud score to Delta Lake."""
+    # Ensure directory exists
+    import os  # pylint: disable=import-outside-toplevel
 
-if WRITE_SILVER:
-    # BRONZE has a flatten schema now
-    # Prepare refined data model on SILVER
-    source_path = f"{get_project_root()}/lakehouse/bronze/media_tv"
-    dest_path = f"{get_project_root()}/lakehouse/silver/media_tv"
+    os.makedirs("lakehouse/gold/fraud_score", exist_ok=True)
 
-    (
-        pl.read_delta(source_path)
-        .filter(pl.col("monday_of_week") == join_key_monday_date)
-        .rename({"payload.cost": "cost_tv"})
-        .rename({"payload.brand": "brand"})
-        .rename({"payload.sub_brand": "sub_brand"})
-        .rename({"payload.campaign_name": "campaign_name"})
-        .with_columns(cost_tv=pl.col("cost_tv").cast(pl.Float32))
-    ).write_delta(
-        target=dest_path, mode="overwrite", delta_write_options=delta_write_options
+    df = pl.DataFrame([score.model_dump()])
+    df.write_delta(
+        target="lakehouse/gold/fraud_score",
+        mode="append",
+        delta_write_options={"partition_by": "user_id"},
     )
+    logger.info("Written fraud score: %s", score)
 
-    source_path = f"{get_project_root()}/lakehouse/bronze/media_radio"
-    dest_path = f"{get_project_root()}/lakehouse/silver/media_radio"
 
-    (
-        pl.read_delta(f"{get_project_root()}/lakehouse/bronze/media_radio")
-        .filter(pl.col("monday_of_week") == join_key_monday_date)
-        .rename({"payload.cost": "cost_radio"})
-        .rename({"payload.brand": "brand"})
-        .rename({"payload.sub_brand": "sub_brand"})
-        .rename({"payload.campaign_name": "campaign_name"})
-        .with_columns(cost_radio=pl.col("cost_radio").cast(pl.Float32))
-    ).write_delta(
-        target=dest_path, mode="overwrite", delta_write_options=delta_write_options
-    )
+def _build_fraud_prompt(context: dict) -> str:
+    """Build prompt for fraud detection."""
+    return f"""
+    Analyze the following user activity history for fraud detection.
 
-    source_path = f"{get_project_root()}/lakehouse/bronze/sale"
-    dest_path = f"{get_project_root()}/lakehouse/silver/sale"
+    User Activity:
+    {json.dumps(context, default=str, indent=2)}
 
-    (
-        pl.read_delta(source_path)
-        .filter(pl.col("monday_of_week") == join_key_monday_date)
-        .rename({"payload.sale_amount": "sale_amount"})
-        .rename({"payload.brand": "brand"})
-        .rename({"payload.sub_brand": "sub_brand"})
-        .rename({"payload.campaign_name": "campaign_name"})
-        .rename({"payload.mmm_model": "mmm_model"})
-        .with_columns(sale_amount=pl.col("sale_amount").cast(pl.Float32))
-    ).write_delta(
-        target=dest_path, mode="overwrite", delta_write_options=delta_write_options
-    )
-else:
-    logger.info("Skipping silver write.")
+    Task:
+    Calculate the probability (0 to 1) that the recent activity is fraudulent.
+    Consider:
+    - Unusual login locations or devices.
+    - High frequency of high-value orders.
+    - Erratic scrolling behavior or lack thereof (bot-like).
+    - Mismatch between user profile and activity (if available).
 
-# Read SILVER and aggregate to GOLD
-silver_media_radio = pl.read_delta(
-    f"{get_project_root()}/lakehouse/silver/media_radio"
-).filter(pl.col("monday_of_week") == join_key_monday_date)
-
-silver_media_tv = pl.read_delta(
-    f"{get_project_root()}/lakehouse/silver/media_tv"
-).filter(pl.col("monday_of_week") == join_key_monday_date)
-
-silver_sale = pl.read_delta(f"{get_project_root()}/lakehouse/silver/sale").filter(
-    pl.col("monday_of_week") == join_key_monday_date
-)
-
-agg_silver_media_radio = (
-    silver_media_radio.with_columns(sum_cost_radio=pl.sum("cost_radio"))
-    .select(
-        "monday_of_week",
-        "brand",
-        "sub_brand",
-        "campaign_name",
-        "channel",
-        "sum_cost_radio",
-    )
-    .unique()
-)
-logger.info(agg_silver_media_radio)
-
-agg_silver_media_tv = (
-    silver_media_tv.with_columns(sum_cost_tv=pl.sum("cost_tv"))
-    .select(
-        "monday_of_week",
-        "brand",
-        "sub_brand",
-        "campaign_name",
-        "channel",
-        "sum_cost_tv",
-    )
-    .unique()
-)
-logger.info(agg_silver_media_tv)
-
-agg_silver_sale = (
-    silver_sale.with_columns(sum_sale_amount=pl.sum("sale_amount"))
-    .select(
-        "monday_of_week",
-        "brand",
-        "sub_brand",
-        "campaign_name",
-        "channel",
-        "sum_sale_amount",
-        "mmm_model",
-    )
-    .unique()
-)
-logger.info(agg_silver_sale)
-
-joined_media_sale = agg_silver_media_radio.join(
-    agg_silver_media_tv, on=["monday_of_week", "brand"]
-).join(agg_silver_sale, on=["monday_of_week", "brand"])
-
-# Write GOLD
-dest_path = f"{get_project_root()}/lakehouse/gold/report_model"
-(
-    joined_media_sale.select(
-        "monday_of_week",
-        "brand",
-        "sub_brand",
-        "campaign_name",
-        "channel",
-        "sum_cost_radio",
-        "sum_cost_tv",
-        "sum_sale_amount",
-        "mmm_model",
-    ).write_delta(
-        target=dest_path, mode="overwrite", delta_write_options=delta_write_options
-    )
-)
-
-logger.info(
-    pl.read_delta(f"{get_project_root()}/lakehouse/gold/report_model").filter(
-        pl.col("monday_of_week") == join_key_monday_date
-    )
-)
+    Respond STRICTLY in JSON format:
+    {{
+        "fraud_probability": <float between 0 and 1>,
+        "reason": "<brief explanation>"
+    }}
+    """

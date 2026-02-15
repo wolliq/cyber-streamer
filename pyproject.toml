@@ -17,6 +17,7 @@ dependencies = [
     "polars>=1.21.0",
     "pandas>=2.2.3",
     "pre-commit>=4.5.1",
+    "requests>=2.32.3",
 ]
 
 [dependency-groups]
@@ -26,6 +27,7 @@ dev = [
     "protobuf>=6.33.5",
     "mypy>=1.15.0",
     "ruff>=0.9.6",
+    "types-requests>=2.32.0.20241016",
 ]
 
 [build-system]

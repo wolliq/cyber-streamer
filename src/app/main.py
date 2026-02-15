@@ -8,7 +8,7 @@ from faststream.confluent import KafkaBroker
 from faststream.confluent.config import ConfluentConfig  # type: ignore # pylint: disable=import-error,no-name-in-module
 
 from app.constants import KAFKA_CONFIG, KAFKA_BROKERS, SECURITY
-from app.service.routers import router_media_radio, router_media_tv, router_sale
+from app.service.routers import router
 
 
 logging.basicConfig(
@@ -26,7 +26,7 @@ broker = KafkaBroker(
     config=ConfluentConfig(KAFKA_CONFIG),
 )
 
-broker.include_routers(router_media_radio, router_media_tv, router_sale)
+broker.include_router(router)
 
 
 # TODO accelerate via batching

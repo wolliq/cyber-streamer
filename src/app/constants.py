@@ -32,6 +32,12 @@ if KAFKA_SASL_AUTH_ENABLED:
         username=KAFKA_SASL_USER, password=KAFKA_SASL_PASSWORD, use_ssl=True
     )
 
-TOPIC_MEDIA_RADIO = "media-radio-test"
-TOPIC_MEDIA_TV = "media-tv-test"
-TOPIC_SALE = "sale-test"
+TOPIC_USER = "user-events"
+TOPIC_ARTICLE = "article-events"
+TOPIC_ORDER = "order-events"
+TOPIC_LOGIN = "login-events"
+TOPIC_BUY = "buy-events"
+TOPIC_SCROLL = "scroll-events"
+
+OLLAMA_URL = environ.get("OLLAMA_URL", "http://localhost:11434")
+OLLAMA_MODEL = environ.get("OLLAMA_MODEL", "llama3")

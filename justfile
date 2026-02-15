@@ -24,7 +24,7 @@ precommit:
 
 # run the tests
 test:
-	uv run pytest -s tests/
+	KAFKA_SASL_USER=dummy KAFKA_SASL_PASSWORD=dummy PYTHONPATH=src uv run python -m pytest -s tests/
 
 # Run Kafka in a Docker container
 kafka-server:
@@ -36,39 +36,36 @@ kafka-server:
       -e ADV_HOST=127.0.0.1 \
       lensesio/fast-data-dev:latest
 
-# Add a new topic to Kafka
+# Add new topics to Kafka
 kafka-add-topics:
-    kafka-topics --bootstrap-server localhost:9092 --create --topic media-radio-test --partitions 1
+    kafka-topics --bootstrap-server localhost:9092 --create --topic user-events --partitions 1 || true
+    kafka-topics --bootstrap-server localhost:9092 --create --topic order-events --partitions 1 || true
+    kafka-topics --bootstrap-server localhost:9092 --create --topic article-events --partitions 1 || true
+    kafka-topics --bootstrap-server localhost:9092 --create --topic login-events --partitions 1 || true
+    kafka-topics --bootstrap-server localhost:9092 --create --topic buy-events --partitions 1 || true
+    kafka-topics --bootstrap-server localhost:9092 --create --topic scroll-events --partitions 1 || true
 
-# Produce media channel radio test sample
-kafka-produce-media-radio:
-    jq -rc . tests/samples/media_channel_radio.json | kafka-console-producer --bootstrap-server localhost:9092 --topic media-radio-test
-kafka-produce-media-radio-10:
-    for i in {1..10}; do just kafka-produce-media-radio; done
+# Produce test samples (requires samples in tests/samples/fraud/)
+kafka-produce-user:
+    echo '{"user_id": "u1", "email": "test@example.com", "phone": "+1234567890", "address": "123 Main St", "registration_date": "2023-01-01T10:00:00Z"}' | kafka-console-producer --bootstrap-server localhost:9092 --topic user-events
 
-# Produce media channel tv test sample
-kafka-produce-media-tv:
-    jq -rc . tests/samples/media_channel_tv.json | kafka-console-producer --bootstrap-server localhost:9092 --topic media-tv-test
-kafka-produce-media-tv-10:
-    for i in {1..10}; do just kafka-produce-media-tv; done
+kafka-produce-login:
+    echo '{"user_id": "u1", "timestamp": "2023-10-27T10:00:00Z", "ip_address": "192.168.1.1", "device_id": "d1", "success": true}' | kafka-console-producer --bootstrap-server localhost:9092 --topic login-events
 
-# Produce sale test sample
-kafka-produce-sale:
-    jq -rc . tests/samples/sale.json | kafka-console-producer --bootstrap-server localhost:9092 --topic sale-test
-kafka-produce-sale-10:
-    for i in {1..10}; do just kafka-produce-sale; done
+kafka-produce-buy:
+    echo '{"user_id": "u1", "order_id": "o1", "timestamp": "2023-10-27T10:05:00Z", "payment_method": "credit_card"}' | kafka-console-producer --bootstrap-server localhost:9092 --topic buy-events
+
+kafka-produce-scroll:
+    echo '{"user_id": "u1", "article_id": "a1", "timestamp": "2023-10-27T10:02:00Z", "percentage": 0.8, "duration_seconds": 120.5}' | kafka-console-producer --bootstrap-server localhost:9092 --topic scroll-events
 
 # Run the FastAPI app locally
 run-locally:
 	uv run uvicorn app.main:app --app-dir src --port 8888 --reload
 
 # Use the local installed binary to check consumer activity
-kafka-consume-media-radio-test:
-    kafka-console-consumer --bootstrap-server localhost:9092 --topic media-radio-test
-kafka-consume-media-tv-test:
-    kafka-console-consumer --bootstrap-server localhost:9092 --topic media-tv-test
-kafka-consume-sale-test:
-    kafka-console-consumer --bootstrap-server localhost:9092 --topic sale-test
+kafka-consume-fraud-scores:
+    # Note: Gold tables are Parquet/Delta, not Kafka topics, but checking logs is good
+    echo "Check application logs for fraud scores"
 
 build:
     docker build --no-cache -t fkl-streamer .
