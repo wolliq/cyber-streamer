@@ -1,3 +1,5 @@
+"""Sales models module."""
+
 import datetime
 
 from pydantic import BaseModel, field_serializer
@@ -6,9 +8,7 @@ from app.models import SaleBaseModelLakehouse, SaleBaseEnvelopeWrapper
 
 
 class Sale(BaseModel):
-    """
-    Class representing Sales
-    """
+    """Class representing Sales."""
 
     start_date: datetime.datetime
     brand: str
@@ -20,28 +20,27 @@ class Sale(BaseModel):
 
 
 class SaleLakehouse(SaleBaseModelLakehouse):
-    """
-    Class representing media channel Sale in Lakehouse
-    """
+    """Class representing media channel Sale in Lakehouse."""
 
     @field_serializer("week")
     def serialize_dt(self, dt: datetime.datetime) -> str:
+        """Serialize datetime to string."""
         return dt.strftime("%Y-%m-%d")
 
 
 class SaleEnvelope(SaleBaseEnvelopeWrapper):
-    """
-    Class representing an event with a media channel payload
-    """
+    """Class representing an event with a media channel payload."""
 
     payload: Sale
     prev_payload: Sale | None = None
 
     @staticmethod
     def get_current_week_monday(start_date: datetime.datetime) -> datetime.date:
+        """Get the Monday of the current week."""
         return (start_date - datetime.timedelta(days=start_date.weekday())).date()
 
     def to_lakehouse(self, *args) -> SaleLakehouse:
+        """Convert to Lakehouse model."""
         return SaleLakehouse(
             week=self.get_current_week_monday(self.payload.start_date),
             campaign_name=self.payload.campaign_name,

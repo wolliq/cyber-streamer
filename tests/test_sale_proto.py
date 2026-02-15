@@ -1,10 +1,11 @@
+"""Test Sale Proto module."""
+
 # pylint: disable=no-member
 from tests import sale_pb2
 
 
 def main():
-    """Test serialization and deserialization of SaleEnvelope"""
-
+    """Test serialization and deserialization of SaleEnvelope."""
     # Create a SalePayload instance
     sale_payload = sale_pb2.SalePayload(
         start_date="2024-06-15T08:00:00Z",  # ISO 8601 string
@@ -57,4 +58,5 @@ def main():
 
 
 def test_sale_proto():
+    """Test the main function."""
     assert main()

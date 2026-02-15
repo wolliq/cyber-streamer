@@ -1,3 +1,5 @@
+"""Routers module."""
+
 import datetime
 import logging
 
@@ -13,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 async def handle_media_radio_event(event: MediaChannelRadioEnvelope):
+    """Handle media radio event."""
     logger.info(event)
     data = event.flatten(event.model_dump())
     df = pl.DataFrame(data)
@@ -51,6 +54,7 @@ router_media_radio = KafkaRouter(
 
 
 async def handle_media_tv_event(event: MediaChannelTvEnvelope):
+    """Handle media tv event."""
     logger.info(event)
     data = event.flatten(event.model_dump())
     df = pl.DataFrame(data)
@@ -87,6 +91,7 @@ router_media_tv = KafkaRouter(
 
 
 async def handle_sale_event(event: SaleEnvelope):
+    """Handle sale event."""
     logger.info(event)
     data = event.flatten(event.model_dump())
     df = pl.DataFrame(data)

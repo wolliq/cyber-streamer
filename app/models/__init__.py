@@ -1,3 +1,5 @@
+"""Models module."""
+
 from abc import abstractmethod
 import datetime
 
@@ -9,9 +11,7 @@ from pydantic import BaseModel
 
 
 class MediaBaseModelLakehouse(BaseModel):
-    """
-    Class base for lakehouse storage
-    """
+    """Class base for lakehouse storage."""
 
     week: datetime.date
     campaign_name: str
@@ -20,13 +20,13 @@ class MediaBaseModelLakehouse(BaseModel):
     media_channel: str
 
     class Config:
+        """Configuration for Pydantic model."""
+
         arbitrary_types_allowed = True
 
 
 class SaleBaseModelLakehouse(BaseModel):
-    """
-    Class base for sales in Lakehouse
-    """
+    """Class base for sales in Lakehouse."""
 
     week: datetime.date
     campaign_name: str
@@ -39,6 +39,8 @@ class SaleBaseModelLakehouse(BaseModel):
     mmm_model: str
 
     class Config:
+        """Configuration for Pydantic model."""
+
         arbitrary_types_allowed = True
 
 
@@ -48,9 +50,7 @@ class SaleBaseModelLakehouse(BaseModel):
 
 
 class MediaBaseEnvelopeWrapper(BaseModel):
-    """
-    Class base BaseEnvelopeWrapper
-    """
+    """Class base BaseEnvelopeWrapper."""
 
     event_uuid: str
     event_ts: int
@@ -63,9 +63,7 @@ class MediaBaseEnvelopeWrapper(BaseModel):
 
     @staticmethod
     def flatten(data: dict) -> dict:
-        """
-        Recursively flatten the dictionary and return a flat dict.
-        """
+        """Recursively flatten the dictionary and return a flat dict."""
         flat_dict = {}
 
         def _flatten(d, parent_key=""):
@@ -85,22 +83,22 @@ class MediaBaseEnvelopeWrapper(BaseModel):
         return flat_dict
 
     class Config:
+        """Configuration for Pydantic model."""
+
         arbitrary_types_allowed = True
 
     @staticmethod
     @abstractmethod
     def get_current_week_monday(start_date: datetime.datetime) -> datetime.date:
-        pass
+        """Get the Monday of the current week."""
 
     @abstractmethod
     def to_lakehouse(self, *args) -> MediaBaseModelLakehouse:
-        pass
+        """Convert to Lakehouse model."""
 
 
 class SaleBaseEnvelopeWrapper(BaseModel):
-    """
-    Class base BaseEnvelopeWrapper
-    """
+    """Class base BaseEnvelopeWrapper."""
 
     event_uuid: str
     event_ts: int
@@ -112,13 +110,13 @@ class SaleBaseEnvelopeWrapper(BaseModel):
     prev_payload: BaseModel | None = None
 
     class Config:
+        """Configuration for Pydantic model."""
+
         arbitrary_types_allowed = True
 
     @staticmethod
     def flatten(data: dict) -> dict:
-        """
-        Recursively flatten the dictionary and return a flat dict.
-        """
+        """Recursively flatten the dictionary and return a flat dict."""
         flat_dict = {}
 
         def _flatten(d, parent_key=""):
@@ -140,8 +138,8 @@ class SaleBaseEnvelopeWrapper(BaseModel):
     @staticmethod
     @abstractmethod
     def get_current_week_monday(start_date: datetime.datetime) -> datetime.date:
-        pass
+        """Get the Monday of the current week."""
 
     @abstractmethod
     def to_lakehouse(self, *args) -> SaleBaseModelLakehouse:
-        pass
+        """Convert to Lakehouse model."""

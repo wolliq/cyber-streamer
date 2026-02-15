@@ -1,3 +1,5 @@
+"""Constants module."""
+
 import ssl
 from os import environ
 

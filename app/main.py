@@ -1,3 +1,5 @@
+"""Main application module."""
+
 import logging
 from contextlib import asynccontextmanager
 
@@ -39,12 +41,16 @@ broker.include_routers(router_media_radio, router_media_tv, router_sale)
 
 
 class FKLStreamerApp(FastAPI):
+    """FKL Streamer Application."""
+
     def __init__(self, *args, **kwargs):
+        """Initialize the application."""
         super().__init__(*args, **kwargs)
 
 
 @asynccontextmanager
 async def lifespan(_app: FKLStreamerApp):
+    """Handle application lifespan."""
     await broker.start()
     yield
     await broker.close()
@@ -61,4 +67,5 @@ app = FKLStreamerApp(
 
 @app.get("/health")
 def health_check():
+    """Check application health."""
     return {"status": "healthy"}

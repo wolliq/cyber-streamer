@@ -1,3 +1,5 @@
+"""Silver processor module."""
+
 import logging
 from pathlib import Path
 import datetime
@@ -19,6 +21,7 @@ pl.Config.set_tbl_width_chars(1000)
 
 
 def get_project_root() -> Path:
+    """Get project root path."""
     return Path(__file__).resolve().parent.parent.parent
 
 

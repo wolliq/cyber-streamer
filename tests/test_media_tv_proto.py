@@ -1,3 +1,5 @@
+"""Test Media TV Proto module."""
+
 # pylint: disable=no-member,too-many-arguments,too-many-positional-arguments
 import logging
 import datetime
@@ -27,7 +29,6 @@ def create_media_tv_event(
     prev_brand=None,
 ):
     """Creates a MediaRadioEnvelope object."""
-
     payload = media_tv_pb2.MediaTvPayload()
     payload.brand = brand
     payload.sub_brand = sub_brand
@@ -56,7 +57,6 @@ def create_media_tv_event(
 
 def main():
     """Demonstrates creating, serializing, and deserializing a MediaTvEnvelope."""
-
     # Example usage:
     start_date_iso = (
         datetime.datetime(2024, 11, 1, 10, 0, 0).isoformat() + "Z"
@@ -130,4 +130,5 @@ def main():
 
 
 def test_media_tv_proto():
+    """Test the main function."""
     assert main()
