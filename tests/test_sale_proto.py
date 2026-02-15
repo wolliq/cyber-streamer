@@ -1,3 +1,4 @@
+# pylint: disable=no-member
 from tests import sale_pb2
 
 

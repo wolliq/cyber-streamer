@@ -1,3 +1,4 @@
+# pylint: disable=no-member,too-many-arguments,too-many-positional-arguments
 import logging
 import datetime
 import time
@@ -75,7 +76,7 @@ def main():
 
     # Serialize to a byte string
     serialized_event = event.SerializeToString()
-    logger.info("Serialized event:", serialized_event)
+    logger.info("Serialized event: %s", serialized_event)
 
     # Deserialize from the byte string
     deserialized_event = media_tv_pb2.MediaTvEnvelope()
@@ -83,20 +84,20 @@ def main():
 
     # Print the deserialized data
     logger.info("\nDeserialized event:")
-    logger.info("Brand:", deserialized_event.payload.brand)
+    logger.info("Brand: %s", deserialized_event.payload.brand)
     logger.info(
-        "Previous Brand (if set):",
+        "Previous Brand (if set): %s",
         (
             deserialized_event.prev_payload.brand
             if deserialized_event.HasField("prev_payload")
             else "Not set"
         ),
     )
-    logger.info("Event Timestamp:", deserialized_event.event_ts)
-    logger.info("Start Date:", deserialized_event.payload.start_date)
-    logger.info("Cost:", deserialized_event.payload.cost)
-    logger.info("Currency:", deserialized_event.payload.currency)
-    logger.info("Event Type:", deserialized_event.event_type)
+    logger.info("Event Timestamp: %s", deserialized_event.event_ts)
+    logger.info("Start Date: %s", deserialized_event.payload.start_date)
+    logger.info("Cost: %s", deserialized_event.payload.cost)
+    logger.info("Currency: %s", deserialized_event.payload.currency)
+    logger.info("Event Type: %s", deserialized_event.event_type)
 
     # Example without previous brand
     event2 = create_media_tv_event(
@@ -114,16 +115,16 @@ def main():
     deserialized_event2 = media_tv_pb2.MediaTvEnvelope()
     deserialized_event2.ParseFromString(serialized_event2)
     logger.info("\nDeserialized event 2:")
-    logger.info("Brand:", deserialized_event2.payload.brand)
+    logger.info("Brand: %s", deserialized_event2.payload.brand)
     logger.info(
-        "Previous Brand (if set):",
+        "Previous Brand (if set): %s",
         (
             deserialized_event2.prev_payload.brand
             if deserialized_event2.HasField("prev_payload")
             else "Not set"
         ),
     )  # Correct way to access optional fields
-    logger.info("Cost:", deserialized_event2.payload.cost)
+    logger.info("Cost: %s", deserialized_event2.payload.cost)
 
     return True
 

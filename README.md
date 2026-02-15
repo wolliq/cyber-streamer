@@ -12,7 +12,7 @@ Python virtual environment can be setup as follows:
 
 1. Install [uv](https://docs.astral.sh/uv/getting-started/installation/)
 2. Install just https://github.com/casey/just to use commands in the justfile.
-4. run 
+4. run
 ```
 $ just install
 ```
@@ -69,7 +69,7 @@ Use docker-compose or K8s locally:
 ```
 $ just run-docker-compose
 ```
-if you want to lanch both kafka and the app, or 
+if you want to lanch both kafka and the app, or
 ```
 $ just k8s-apply
 ----

@@ -41,6 +41,9 @@ exclude = ["*_pb2.py", ".venv"]
 [tool.mypy]
 exclude = [".*_pb2\\.py", ".venv"]
 
+[tool.pylint.master]
+ignore-patterns = ".*_pb2.py"
+
 [tool.pylint.messages_control]
 disable = [
     "C0114", # missing-module-docstring
