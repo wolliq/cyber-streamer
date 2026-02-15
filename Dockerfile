@@ -14,7 +14,7 @@ COPY pyproject.toml uv.lock .envrc ./
 RUN uv sync --frozen --no-cache
 
 # Copy the application code
-COPY app/ app/
+COPY src/app/ app/
 
 # Expose the port that FastAPI will run on
 EXPOSE 8000

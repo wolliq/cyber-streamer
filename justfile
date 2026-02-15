@@ -20,7 +20,7 @@ precommit:
 	uv run ruff check .
 	uv run ruff format --check .
 	uv run mypy .
-	uv run pylint app/
+	uv run pylint src/app/
 
 # run the tests
 test:
@@ -60,7 +60,7 @@ kafka-produce-sale-10:
 
 # Run the FastAPI app locally
 run-locally:
-	uv run uvicorn app.main:app --port 8888 --reload
+	uv run uvicorn app.main:app --app-dir src --port 8888 --reload
 
 # Use the local installed binary to check consumer activity
 kafka-consume-media-radio-test:
