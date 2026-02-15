@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  kafka:
+    image: lensesio/fast-data-dev:latest
+    container_name: kafka
+    environment:
+      ADV_HOST: "kafka"
+    ports:
+      - "2181:2181"   # Zookeeper
+      - "3030:3030"   # Lenses UI
+      - "8081-8083:8081-8083"  # Confluent Schema Registry, REST Proxy, etc.
+      - "9581-9585:9581-9585"  # JMX monitoring
+      - "9092:9092"   # Kafka Broker
+    networks:
+      - app_network
+
+  fastapi:
+    build: .
+    container_name: fkl-streamer
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_BROKERS: "kafka:9092"         # Kafka broker (use service name)
+      RUN_ENV: "local"                    # Running environment
+      KAFKA_SASL_AUTH_ENABLED: "False"    # Disable SASL auth
+      WEB_CONCURRENCY: "1"                # Web concurrency
+    ports:
+      - "8000:8000"
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge

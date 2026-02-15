@@ -1,0 +1,54 @@
+# Ignore Python compiled files
+__pycache__/
+*.py[cod]
+
+# Ignore virtual environment
+venv/
+.venv/
+.env/
+.envrc
+
+# Ignore JetBrains IDE project files
+.idea/
+
+# Ignore common OS files
+.DS_Store
+Thumbs.db
+
+# Ignore logs and temporary files
+*.log
+tmp/
+*.swp
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore test coverage reports
+htmlcov/
+*.cover
+*.py,cover
+.coverage
+.coverage.*
+*.lcov
+
+# Ignore MyPy and type-checking artifacts
+.mypy_cache/
+.typing/
+
+# Ignore pytest cache
+.pytest_cache/
+
+# Ignore build and distribution files
+dist/
+build/
+*.egg-info/
+
+# Ignore local configuration
+*.ini
+*.cfg
+
+# ingore data files
+*.parquet
+
+./lakehouse/*
+/lakehouse/

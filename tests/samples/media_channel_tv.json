@@ -1,0 +1,19 @@
+  {
+    "event_uuid": "98765-klmno",
+    "event_ts": 1738704023000,
+    "event_type": "typeC",
+    "occurred_ts": 1738704023000,
+    "channel": "tv",
+    "request_origin": "desktop-web",
+    "payload": {
+      "brand": "MediaOne",
+      "sub_brand": "Global Reports",
+      "campaign_name": "Breaking News Special",
+      "start_date": "2024-06-20T06:00:00Z",
+      "ad_duration": 20,
+      "spot_type": "breaking-news",
+      "cost": 130.00,
+      "currency": "EUR"
+    },
+    "prev_payload": null
+  }

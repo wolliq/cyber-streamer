@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fkl-streamer-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fkl-streamer-app
+  template:
+    metadata:
+      labels:
+        app: fkl-streamer-app
+    spec:
+      containers:
+        - name: fkl-streamer-app
+          image: fkl-streamer
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000
+          env:
+            - name: KAFKA_BROKER
+              value: "localhost:9092"
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 3
+            periodSeconds: 5

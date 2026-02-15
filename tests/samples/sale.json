@@ -1,0 +1,18 @@
+{
+  "event_uuid": "123e4567-e89b-12d3-a456-426614174000",
+  "event_ts": 1738704023000,
+  "event_type": "sale_event",
+  "occurred_ts": 1738704023000,
+  "channel": "sale",
+  "request_origin": "data-api",
+  "payload": {
+    "start_date": "2024-02-02T12:00:00",
+    "brand": "MediaOne",
+    "sub_brand": "SubBrandY",
+    "campaign_name": "Winter Sales Campaign",
+    "sale_amount": 2500.75,
+    "currency": "EUR",
+    "mmm_model": "MMM_V1"
+  },
+  "prev_payload": null
+}

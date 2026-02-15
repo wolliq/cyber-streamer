@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package sale;
+
+message SalePayload {
+    string start_date = 1;  // Using Timestamp for datetime
+    string brand = 2;
+    string sub_brand = 3;
+    string campaign_name = 4;
+    double sale_amount = 5;
+    string currency = 6;
+    string mmm_model = 7;
+}
+
+message SaleEnvelope {
+    string event_uuid = 1;
+    int64 event_ts = 2;
+    string event_type = 3;
+    optional int64 occurred_ts = 4;
+    optional string channel = 5;
+    optional string request_origin = 6;
+    SalePayload payload = 7;
+    optional SalePayload prev_payload = 8;
+}

@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package event;
+
+// Define the payload message
+message MediaTvPayload {
+    string brand = 1;
+    string sub_brand = 2;
+    string campaign_name = 3;
+    string start_date = 4;  // Keeping as string to store ISO 8601 format
+    double cost = 5;
+    string currency = 6;
+}
+
+// Define the main event message
+message MediaTvEnvelope {
+    string event_uuid = 1;
+    int64 event_ts = 2;
+    string event_type = 3;
+    int64 occurred_ts = 4;
+    string channel = 5;
+    string request_origin = 6;
+    MediaTvPayload payload = 7;
+    MediaTvPayload prev_payload = 8;  // Can be null (represented as unset in Proto3)
+}

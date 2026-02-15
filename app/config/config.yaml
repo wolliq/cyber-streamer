@@ -1,0 +1,17 @@
+# define applicative config properties
+
+# Source
+kafka-topics:
+  - media_radio_test
+  - media_tv_test
+  - sale_test
+
+# Sink
+lakehouse:
+  - location:
+      - bronze_prefix:
+          - bronze
+      - silver_prefix:
+          - silver
+      - golf_prefix:
+          - gold
