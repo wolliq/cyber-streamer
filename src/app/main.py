@@ -8,7 +8,7 @@ from faststream.confluent import KafkaBroker
 from faststream.confluent.config import ConfluentConfig  # type: ignore # pylint: disable=import-error,no-name-in-module
 
 from app.constants import KAFKA_CONFIG, KAFKA_BROKERS, SECURITY
-from app.service.routers import router
+from app.service.routers import router, shutdown_fraud_service
 
 
 logging.basicConfig(
@@ -29,17 +29,6 @@ broker = KafkaBroker(
 broker.include_router(router)
 
 
-# TODO accelerate via batching
-# BATCH PROCESSING
-#
-# @broker.subscriber(TOPIC_RADIO, batch=True)  # topic name
-# async def handle_msg(payloads: List[MediaBaseEnvelopeWrapper], message: KafkaMessage):
-#     for radio_message, raw_message in zip(payloads, list(message.raw_message)):
-#         logging.INFO(radio_message)
-#         process_content(radio_message)
-#
-
-
 class FKLStreamerApp(FastAPI):
     """FKL Streamer Application."""
 
@@ -54,6 +43,7 @@ async def lifespan(_app: FKLStreamerApp):
     await broker.start()
     yield
     await broker.close()
+    await shutdown_fraud_service()
 
 
 app = FKLStreamerApp(

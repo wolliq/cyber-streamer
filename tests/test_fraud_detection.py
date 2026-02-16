@@ -2,13 +2,12 @@
 
 import datetime
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock, AsyncMock
 import logging
 
-import polars as pl
-
-from app.models.fraud import User, Order, FraudScore
-from app.processor.silver_proc import process_fraud, _build_fraud_prompt
+from app.models.fraud import User, Order
+from app.service.fraud_service import FraudService
+from app.service.ollama_provider import FraudResult
 
 
 class TestFraudModels(unittest.TestCase):
@@ -40,64 +39,104 @@ class TestFraudModels(unittest.TestCase):
         self.assertEqual(order.total_price, 10.0)
 
 
-class TestFraudProcessor(unittest.IsolatedAsyncioTestCase):
-    """Test fraud processor."""
+class TestFraudService(unittest.IsolatedAsyncioTestCase):
+    """Test FraudService logic."""
 
     def setUp(self):
         """Set up test fixtures."""
         self.user_id = "test_user_123"
-        self.logger = logging.getLogger("app.processor.silver_proc")
+        self.logger = logging.getLogger("app.service.fraud_service")
 
-    def test_build_prompt(self):
-        """Test prompt building."""
-        context = {
-            "user_id": self.user_id,
-            "logins": [{"timestamp": "2023-01-01", "success": True}],
-            "buys": [],
-            "scrolls": [],
-            "orders": [],
-        }
-        prompt = _build_fraud_prompt(context)
-        self.assertIn(self.user_id, prompt)
-        self.assertIn("logins", prompt)
+    @patch("app.service.fraud_service.redis.from_url")
+    @patch("app.service.fraud_service.OllamaProvider")
+    @patch("app.service.fraud_service._write_fraud_score")
+    async def test_process_event_threshold_breach(
+        self, mock_write, mock_ollama_cls, mock_redis_from_url
+    ):
+        """Test processing event resulting in fraud check."""
+        # 1. Mock Redis
+        mock_redis = MagicMock()  # Client methods like pipeline() are sync
+        mock_redis_from_url.return_value = mock_redis
 
-    @patch("app.processor.silver_proc.llm_client")
-    @patch("app.processor.silver_proc._load_table")
-    @patch("app.processor.silver_proc._write_fraud_score")
-    async def test_process_fraud(self, mock_write, mock_load, mock_llm):
-        """Test process_fraud function."""
-        # Mock Delta Lake data
-        mock_load.return_value = pl.DataFrame()
+        # Pipeline mocks
+        mock_pipeline = AsyncMock()
+        mock_redis.pipeline.return_value = mock_pipeline
+        mock_pipeline.__aenter__.return_value = mock_pipeline
+        mock_pipeline.execute.return_value = [
+            1,
+            1,
+            10,
+            True,
+        ]  # ZADD, REM, CARD=10, EXPIRE
 
-        # Mock LLM response
-        mock_llm.generate.return_value = (
-            '{"fraud_probability": 0.85, "reason": "Suspicious login location"}'
+        # Redis Get (Alert Lock) and ZRange need to be async
+        mock_redis.get = AsyncMock(return_value=None)
+        mock_redis.zrange = AsyncMock(
+            return_value=['{"event_type": "login", "timestamp": 123}']
+        )
+        mock_redis.setex = AsyncMock()
+
+        # 2. Mock Ollama
+        mock_ollama_instance = mock_ollama_cls.return_value
+        mock_ollama_instance.analyze_behavior = AsyncMock(
+            return_value=FraudResult(
+                score=0.85, reason="Suspicious activity", is_critical=False
+            )
         )
 
-        # Run processor
-        await process_fraud(self.user_id)
+        # 3. Instantiate Service
+        service = FraudService()
 
-        # Verify LLM was called
-        mock_llm.generate.assert_called_once()
+        # 4. Call process_event
+        event = {"event_type": "login", "user_id": self.user_id, "timestamp": 123}
+        await service.process_event(self.user_id, event)
 
-        # Verify score was written
+        # 5. Assertions
+        # Redis pipeline called
+        mock_pipeline.zadd.assert_called()
+        mock_pipeline.zcard.assert_called()
+
+        # Threshold met (10), so ZRange called
+        mock_redis.zrange.assert_called()
+
+        # Ollama called
+        mock_ollama_instance.analyze_behavior.assert_called()
+
+        # Write score called
         mock_write.assert_called_once()
-        args, _ = mock_write.call_args
-        score = args[0]
-        self.assertIsInstance(score, FraudScore)
-        self.assertEqual(score.user_id, self.user_id)
-        self.assertEqual(score.score, 0.85)
 
-    @patch("app.processor.silver_proc.llm_client")
-    @patch("app.processor.silver_proc._load_table")
-    @patch("app.processor.silver_proc._write_fraud_score")
-    async def test_process_fraud_invalid_json(self, mock_write, mock_load, mock_llm):
-        """Test process_fraud with invalid LLM response."""
-        mock_load.return_value = pl.DataFrame()
-        mock_llm.generate.return_value = "Not JSON"
+        # Alert lock set
+        mock_redis.setex.assert_called_with(f"last_alert:{self.user_id}", 120, "1")
 
-        await process_fraud(self.user_id)
+    @patch("app.service.fraud_service.redis.from_url")
+    @patch("app.service.fraud_service.OllamaProvider")
+    @patch("app.service.fraud_service._write_fraud_score")
+    async def test_process_event_no_threshold(
+        self, mock_write, mock_ollama_cls, mock_redis_from_url
+    ):
+        """Test processing event below threshold."""
+        mock_redis = MagicMock()
+        mock_redis_from_url.return_value = mock_redis
 
+        mock_pipeline = AsyncMock()
+        mock_redis.pipeline.return_value = mock_pipeline
+        mock_pipeline.__aenter__.return_value = mock_pipeline
+        mock_pipeline.execute.return_value = [1, 1, 5, True]  # CARD=5
+
+        # Mock other asyncio methods on redis client just in case
+        mock_redis.zadd = AsyncMock()
+        mock_redis.zremrangebyscore = AsyncMock()
+        mock_redis.zcard = AsyncMock()
+        mock_redis.expire = AsyncMock()
+
+        service = FraudService()
+        event = {"event_type": "login", "user_id": self.user_id}
+        await service.process_event(self.user_id, event)
+
+        # Ollama NOT called
+        mock_ollama_cls.return_value.analyze_behavior.assert_not_called()
+
+        # Write score NOT called
         mock_write.assert_not_called()
 
 

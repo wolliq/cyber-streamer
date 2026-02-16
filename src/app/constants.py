@@ -41,3 +41,4 @@ TOPIC_SCROLL = "scroll-events"
 
 OLLAMA_URL = environ.get("OLLAMA_URL", "http://localhost:11434")
 OLLAMA_MODEL = environ.get("OLLAMA_MODEL", "llama3")
+REDIS_URL = environ.get("REDIS_URL", "redis://localhost:6379")

@@ -14,9 +14,18 @@ from app.constants import (
     TOPIC_SCROLL,
 )
 from app.models.fraud import User, Order, Article, Login, Buy, Scroll
-from app.processor.silver_proc import process_fraud
+from app.service.fraud_service import FraudService
 
 logger = logging.getLogger(__name__)
+
+# Initialize FraudService
+fraud_service = FraudService()
+
+
+async def shutdown_fraud_service():
+    """Shutdown fraud service resources."""
+    logger.info("Shutting down FraudService...")
+    await fraud_service.close()
 
 
 async def handle_user_event(event: User):
@@ -39,7 +48,6 @@ async def handle_order_event(event: Order):
         mode="append",
         delta_write_options={"partition_by": "timestamp"},
     )
-    await process_fraud(event.user_id)
 
 
 async def handle_article_event(event: Article):
@@ -62,7 +70,7 @@ async def handle_login_event(event: Login):
         mode="append",
         delta_write_options={"partition_by": "timestamp"},
     )
-    await process_fraud(event.user_id)
+    await fraud_service.process_event(event.user_id, event.model_dump())
 
 
 async def handle_buy_event(event: Buy):
@@ -74,7 +82,7 @@ async def handle_buy_event(event: Buy):
         mode="append",
         delta_write_options={"partition_by": "timestamp"},
     )
-    await process_fraud(event.user_id)
+    await fraud_service.process_event(event.user_id, event.model_dump())
 
 
 async def handle_scroll_event(event: Scroll):
@@ -86,7 +94,7 @@ async def handle_scroll_event(event: Scroll):
         mode="append",
         delta_write_options={"partition_by": "timestamp"},
     )
-    await process_fraud(event.user_id)
+    await fraud_service.process_event(event.user_id, event.model_dump())
 
 
 router = KafkaRouter(
