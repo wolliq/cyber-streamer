@@ -8,13 +8,13 @@ COPY --from=ghcr.io/astral-sh/uv:0.5.29 /uv /uvx /bin/
 WORKDIR /app
 
 # Copy the uv configuration files
-COPY pyproject.toml uv.lock .envrc ./
+COPY pyproject.toml uv.lock README.md ./
 
 # Install dependencies
 RUN uv sync --frozen --no-cache
 
 # Copy the application code
-COPY app/ app/
+COPY src/app/ app/
 
 # Expose the port that FastAPI will run on
 EXPOSE 8000

@@ -1,30 +1,40 @@
-version: "3.8"
-
 services:
   kafka:
     image: lensesio/fast-data-dev:latest
     container_name: kafka
     environment:
-      ADV_HOST: "kafka"
+      ADV_HOST: "${ADV_HOST:-kafka}"
     ports:
-      - "2181:2181"   # Zookeeper
-      - "3030:3030"   # Lenses UI
-      - "8081-8083:8081-8083"  # Confluent Schema Registry, REST Proxy, etc.
-      - "9581-9585:9581-9585"  # JMX monitoring
-      - "9092:9092"   # Kafka Broker
+      - "2181:2181" # Zookeeper
+      - "3030:3030" # Lenses UI
+      - "8081-8083:8081-8083" # Confluent Schema Registry, REST Proxy, etc.
+      - "9581-9585:9581-9585" # JMX monitoring
+      - "9092:9092" # Kafka Broker
+    networks:
+      - app_network
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
     networks:
       - app_network
 
   fastapi:
     build: .
-    container_name: fkl-streamer
+    container_name: cyber-streamer
     depends_on:
       - kafka
     environment:
-      KAFKA_BROKERS: "kafka:9092"         # Kafka broker (use service name)
-      RUN_ENV: "local"                    # Running environment
-      KAFKA_SASL_AUTH_ENABLED: "False"    # Disable SASL auth
-      WEB_CONCURRENCY: "1"                # Web concurrency
+      KAFKA_BROKERS: "kafka:9092" # Kafka broker (use service name)
+      RUN_ENV: "local" # Running environment
+      KAFKA_SASL_AUTH_ENABLED: "False" # Disable SASL auth
+      WEB_CONCURRENCY: "1" # Web concurrency
+      REDIS_URL: "redis://redis:6379" # Redis URL
+      OLLAMA_URL: "http://host.docker.internal:11434" # Connect to host Ollama
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # Allow access to host
     ports:
       - "8000:8000"
     networks:
