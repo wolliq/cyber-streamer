@@ -1,11 +1,12 @@
 """Main application module."""
 
 import logging
+from typing import cast
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from faststream.confluent import KafkaBroker
-from faststream.confluent.config import ConfluentConfig  # type: ignore # pylint: disable=import-error,no-name-in-module
+from faststream.confluent.helpers.config import ConfluentConfig  # type: ignore # pylint: disable=import-error,no-name-in-module
 
 from app.constants import KAFKA_CONFIG, KAFKA_BROKERS, SECURITY
 from app.service.routers import router, shutdown_fraud_service
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 broker = KafkaBroker(
     bootstrap_servers=KAFKA_BROKERS or "localhost:9092",
     security=SECURITY,
-    config=ConfluentConfig(KAFKA_CONFIG),
+    config=cast(ConfluentConfig, KAFKA_CONFIG),
 )
 
 broker.include_router(router)

@@ -1,11 +1,9 @@
-version: "3.8"
-
 services:
   kafka:
     image: lensesio/fast-data-dev:latest
     container_name: kafka
     environment:
-      ADV_HOST: "kafka"
+      ADV_HOST: "${ADV_HOST:-kafka}"
     ports:
       - "2181:2181" # Zookeeper
       - "3030:3030" # Lenses UI
