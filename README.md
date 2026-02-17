@@ -5,6 +5,30 @@ This application:
 - consumes data from Kafka server topics
 - source it to Delta Lake lakehouse for ML downstream tasks
 
+## Architecture
+
+```mermaid
+graph TD
+    subgraph Data Sources
+        G[Traffic Generator] -->|Produces Events| K[Kafka]
+    end
+
+    subgraph Streaming App
+        K -->|Consumes| R[Routers]
+        R -->|Validates| M[Pydantic Models]
+        R -->|Writes Raw Data| L[Lakehouse (Bronze)]
+
+        R -->|Check Fraud| FS[Fraud Service]
+        FS -->|Check Rules| RD[Redis]
+        FS -->|Analyze Behavior| O[Ollama LLM]
+    end
+
+    subgraph Storage
+        L[(Delta Lake)]
+        RD[(Redis Cache)]
+    end
+```
+
 ## Run the app in local for event production/consumption
 
 ### Requirements
@@ -48,6 +72,20 @@ $ just kafka-produce-media-tv
 For sales events:
 ```
 $ just kafka-produce-sales
+```
+
+## Testing
+
+To run the test suite with coverage reporting:
+
+```bash
+# Run tests and generate coverage report
+uv run pytest --cov=src --cov-report=term-missing
+```
+
+Note: If running locally without Kafka/SASL credentials, you may need to bypass auth checks:
+```bash
+KAFKA_SASL_AUTH_ENABLED=False uv run pytest --cov=src --cov-report=term-missing
 ```
 
 ## Lakehouse
