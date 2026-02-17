@@ -27,6 +27,24 @@ jobs:
       - name: Run pre-commit
         run: uv run pre-commit run --all-files
 
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: uv sync --all-extras --dev
+
       - name: Run tests
         env:
           KAFKA_SASL_AUTH_ENABLED: "False"
