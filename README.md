@@ -16,17 +16,60 @@ graph TD
     subgraph Streaming App
         K -->|Consumes| R[Routers]
         R -->|Validates| M[Pydantic Models]
-        R -->|Writes Raw Data| L[Lakehouse (Bronze)]
+        R -->|Writes Raw Data| L
 
         R -->|Check Fraud| FS[Fraud Service]
-        FS -->|Check Rules| RD[Redis]
+        FS -->|Check Rules| RD
         FS -->|Analyze Behavior| O[Ollama LLM]
     end
 
     subgraph Storage
-        L[(Delta Lake)]
+        L[(Lakehouse Bronze)]
         RD[(Redis Cache)]
     end
+```
+
+## E2E Test Flow
+
+Sequence of events during the `e2e_test.sh` bot attack scenario:
+
+```mermaid
+sequenceDiagram
+    participant Script as E2E Script
+    participant Gen as Traffic Generator
+    participant Kafka as Kafka
+    participant App as Streamer App
+    participant Redis as Redis
+    participant Ollama as Ollama
+
+    Note over Script, Ollama: Infrastructure & App Startup
+
+    Script->>Gen: Start Bot Attack Scenario
+
+    loop Rapid Logins (x15)
+        Gen->>Kafka: Produce Login Event
+        Kafka->>App: Consume Event
+        App->>Redis: ZADD event (timestamp)
+        App->>Redis: ZCARD (Check Count)
+    end
+
+    Gen->>Kafka: Produce Buy Event
+    Kafka->>App: Consume Event
+    App->>Redis: ZADD event
+    App->>Redis: ZCARD (Count > 10)
+
+    Note over App, Redis: Threshold Breached!
+
+    App->>Redis: Get Window Events
+    Redis-->>App: List of Events
+
+    App->>Ollama: Analyze Behavior (JSON)
+    Ollama-->>App: Fraud Score (e.g. 0.85)
+
+    App->>App: Log [SUSPICIOUS] Fraud Detected
+
+    Script->>Script: Grep logs for "Fraud Detected"
+    Script->>Script: Verify Success
 ```
 
 ## Run the app in local for event production/consumption

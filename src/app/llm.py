@@ -1,14 +1,13 @@
 """LLM Client for Ollama."""
 
 import json
-import logging
+
 from typing import Optional
 
 import requests
+from loguru import logger
 
 from app.constants import OLLAMA_URL, OLLAMA_MODEL
-
-logger = logging.getLogger(__name__)
 
 
 class OllamaClient:

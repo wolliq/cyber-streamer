@@ -2,15 +2,14 @@
 
 import datetime
 import json
-import logging
+
 import asyncio
 
 import polars as pl
+from loguru import logger
 
 from app.llm import OllamaClient
 from app.models.fraud import FraudScore
-
-logger = logging.getLogger(__name__)
 
 llm_client = OllamaClient()
 

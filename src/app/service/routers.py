@@ -1,8 +1,7 @@
 """Fraud detection routers."""
 
-import logging
-
 import polars as pl
+from loguru import logger
 from faststream.confluent import KafkaRouter, KafkaRoute
 
 from app.constants import (
@@ -15,8 +14,6 @@ from app.constants import (
 )
 from app.models.fraud import User, Order, Article, Login, Buy, Scroll
 from app.service.fraud_service import FraudService
-
-logger = logging.getLogger(__name__)
 
 # Initialize FraudService
 fraud_service = FraudService()

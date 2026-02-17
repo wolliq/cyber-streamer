@@ -1,18 +1,17 @@
 """Fraud detection service."""
 
 import json
-import logging
+
 import time
 import datetime
 
 import redis.asyncio as redis
+from loguru import logger
 
 from app.constants import REDIS_URL
 from app.models.fraud import FraudScore
 from app.processor.silver_proc import _write_fraud_score
 from app.service.ollama_provider import OllamaProvider, FraudResult
-
-logger = logging.getLogger(__name__)
 
 
 class FraudService:
@@ -86,11 +85,7 @@ class FraudService:
         """Handle detected fraud."""
         severity = "CRITICAL" if result.is_critical else "SUSPICIOUS"
         logger.warning(
-            "[%s] Fraud Detected for %s: Score %s - %s",
-            severity,
-            user_id,
-            result.score,
-            result.reason,
+            f"[{severity}] Fraud Detected for {user_id}: Score {result.score} - {result.reason}",
         )
 
         # Create FraudScore object

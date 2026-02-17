@@ -7,11 +7,12 @@ Generates synthetic events (User, Login, Order, Article, Buy, Scroll) and produc
 import json
 import random
 import time
-import logging
+
 import argparse
 from datetime import datetime, timezone
 from uuid import uuid4
 
+from loguru import logger
 from confluent_kafka import Producer
 
 from app.constants import (
@@ -20,11 +21,6 @@ from app.constants import (
     TOPIC_LOGIN,
     TOPIC_BUY,
 )
-
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
 
 # Mock Data
 USER_IDS = [f"user_{i}" for i in range(1, 11)]
@@ -109,7 +105,7 @@ class EventGenerator:
 
     def run_scenario_bot_attack(self, target_user="user_victim"):
         """Simulate a bot attack: Rapid logins followed by buys."""
-        logger.info("--- Starting BOT ATTACK Scenario on %s ---", target_user)
+        logger.info(f"--- Starting BOT ATTACK Scenario on {target_user} ---")
 
         # 1. Rapid Logins (High Frequency)
         for _ in range(15):
@@ -118,18 +114,18 @@ class EventGenerator:
             # Sleep tiny amount to ensure order but still be fast
             time.sleep(0.05)
 
-        logger.info("Sent 15 login events for %s", target_user)
+        logger.info(f"Sent 15 login events for {target_user}")
 
         # 2. Illogical Buy
         topic, event = self.generate_buy(user_id=target_user)
         self.produce(topic, event)
-        logger.info("Sent buy event for %s", target_user)
+        logger.info(f"Sent buy event for {target_user}")
 
         self.flush()
 
     def run_scenario_normal_traffic(self, count=20):
         """Simulate normal background traffic."""
-        logger.info("--- Generating %s random normal events ---", count)
+        logger.info(f"--- Generating {count} random normal events ---")
         for _ in range(count):
             choice = random.choice(["login", "buy", "user"])
             if choice == "login":

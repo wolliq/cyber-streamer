@@ -1,6 +1,5 @@
 """Main application module."""
 
-import logging
 from typing import cast
 from contextlib import asynccontextmanager
 
@@ -11,15 +10,6 @@ from faststream.confluent.helpers.config import ConfluentConfig  # type: ignore 
 from app.constants import KAFKA_CONFIG, KAFKA_BROKERS, SECURITY
 from app.service.routers import router, shutdown_fraud_service
 
-
-logging.basicConfig(
-    format="{asctime} - {levelname} - {message}",
-    style="{",
-    datefmt="%Y-%m-%d %H:%M",
-    level=logging.INFO,
-)
-
-logger = logging.getLogger(__name__)
 
 broker = KafkaBroker(
     bootstrap_servers=KAFKA_BROKERS or "localhost:9092",

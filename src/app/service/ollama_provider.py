@@ -2,14 +2,13 @@
 
 import asyncio
 import json
-import logging
+
 from dataclasses import dataclass
 from typing import List
 
 import httpx
+from loguru import logger
 from app.constants import OLLAMA_URL, OLLAMA_MODEL
-
-logger = logging.getLogger(__name__)
 
 
 @dataclass
