@@ -8,24 +8,26 @@ echo "============================================"
 # 1. Start Infrastructure
 echo "[1/5] Starting Infrastructure (Kafka, Redis)..."
 # Cleanup any existing containers to avoid conflicts
-docker rm -f kafka redis || true
-export ADV_HOST=localhost
+docker rm -f kafka redis cyber-streamer || true
+# Ensure we don't export ADV_HOST=localhost, letting it default to kafka (internal) or user env
+unset ADV_HOST
 docker compose up -d kafka redis
 
 # Function to check if a port is open
 wait_for_port() {
   local host=$1
   local port=$2
-  local name=$3
-  echo "Waiting for $name ($host:$port)..."
+  local service=$3
+  echo "Waiting for $service ($host:$port)..."
   for i in {1..30}; do
     if nc -z "$host" "$port"; then
-      echo "$name is up!"
+      echo "Connection to $host port $port [tcp/test] succeeded!"
+      echo "$service is up!"
       return 0
     fi
     sleep 1
   done
-  echo "$name failed to start."
+  echo "$service failed to come up."
   exit 1
 }
 
@@ -55,62 +57,59 @@ docker compose exec kafka kafka-topics --bootstrap-server localhost:9092 --creat
 docker compose exec kafka kafka-topics --bootstrap-server localhost:9092 --create --topic login-events --partitions 1 --if-not-exists
 docker compose exec kafka kafka-topics --bootstrap-server localhost:9092 --create --topic buy-events --partitions 1 --if-not-exists
 
-# 3. Start App in Background
-echo "[3/5] Starting FastAPI App..."
-# Use a log file to capture output
-LOG_FILE="e2e_app.log"
-KAFKA_BROKERS=localhost:9092 KAFKA_SASL_AUTH_ENABLED=False uv run uvicorn app.main:app --app-dir src --port 8888 > "$LOG_FILE" 2>&1 &
-APP_PID=$!
-echo "App started with PID $APP_PID. Logs in $LOG_FILE"
+# 3. Run FastAPI App (Docker)
+echo "[3/5] Starting FastAPI App (Docker)..."
+# Build first to ensure latest code
+# Ensure .envrc exists for Docker build (copy from template if missing)
+if [ ! -f .envrc ]; then
+  cp .envrc_docker .envrc
+fi
+docker compose build fastapi
+docker compose up -d fastapi
 
-# Wait for App to be healthy
 echo "Waiting for App health check..."
 for i in {1..30}; do
-  if curl -s http://localhost:8888/health | grep "healthy" > /dev/null; then
+  if curl -s http://localhost:8000/health | grep "healthy" > /dev/null; then
     echo "App is healthy!"
     break
   fi
-  if [ $i -eq 30 ]; then
-    echo "App failed to start. Logs:"
-    cat "$LOG_FILE"
-    kill $APP_PID
+  if [ "$i" -eq 30 ]; then
+    echo "App failed to start."
+    docker logs cyber-streamer
     exit 1
   fi
   sleep 1
 done
 
-# 4. Run Generator
+# 4. Run Generator (Docker)
 echo "[4/5] Running Traffic Generator (Bot Attack)..."
-# Just running the bot scenario
-KAFKA_BROKERS=localhost:9092 KAFKA_SASL_AUTH_ENABLED=False uv run python src/app/generator.py --mode bot
+# Run generator inside the network. We use the fastapi image which has the code.
+# We override KAFKA_BROKERS to point to the kafka service name.
+docker compose run --rm \
+  -e KAFKA_BROKERS=kafka:9092 \
+  -e KAFKA_SASL_AUTH_ENABLED=False \
+  fastapi \
+  uv run python -m app.generator --mode bot
 
 # Sleep a bit to let the app process events
 echo "Waiting for processing..."
 sleep 5
 
-# 5. Verification (Grep Logs)
+# 5. Verify Output
 echo "[5/5] Verifying Fraud Detection..."
-if grep -q "Fraud Detected" "$LOG_FILE"; then
+# Check logs from the container
+if docker logs cyber-streamer 2>&1 | grep -q "Fraud Detected"; then
   echo "✅ SUCCESS: Fraud Detected in logs."
-  grep "Fraud Detected" "$LOG_FILE"
+  docker logs cyber-streamer 2>&1 | grep "Fraud Detected"
 else
-  echo "❌ FAILURE: No Fraud Detected in logs."
-  echo "Last 50 lines of logs:"
-  tail -n 50 "$LOG_FILE"
-  # Don't exit with error yet, let cleanup happen, but mark failure
-  TEST_FAILED=true
+  echo "❌ FAILURE: Fraud NOT Detected."
+  echo "Last 50 lines of app logs:"
+  docker logs --tail 50 cyber-streamer
+  exit 1
 fi
 
-# Cleanup
 echo "============================================"
 echo "      CLEANING UP"
 echo "============================================"
-kill $APP_PID || true
-# Optional: Stop docker
-# docker compose down
-
-if [ "$TEST_FAILED" = true ]; then
-  exit 1
-fi
 
 echo "E2E Test Passed!"

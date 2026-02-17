@@ -8,7 +8,7 @@ COPY --from=ghcr.io/astral-sh/uv:0.5.29 /uv /uvx /bin/
 WORKDIR /app
 
 # Copy the uv configuration files
-COPY pyproject.toml uv.lock .envrc ./
+COPY pyproject.toml uv.lock README.md ./
 
 # Install dependencies
 RUN uv sync --frozen --no-cache
