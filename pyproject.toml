@@ -31,6 +31,7 @@ dev = [
     "ruff>=0.9.6",
     "types-requests>=2.32.0.20241016",
     "pytest-cov>=6.0.0",
+    "bandit>=1.8.0",
 ]
 
 [build-system]
@@ -58,3 +59,7 @@ disable = [
     "W0511", # fixme
     "R0903", # too-few-public-methods
 ]
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+skips = ["B311"]
