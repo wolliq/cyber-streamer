@@ -20,8 +20,8 @@ broker = KafkaBroker(
 broker.include_router(router)
 
 
-class FKLStreamerApp(FastAPI):
-    """FKL Streamer Application."""
+class CyberStreamerApp(FastAPI):
+    """Cyber Streamer Application."""
 
     def __init__(self, *args, **kwargs):
         """Initialize the application."""
@@ -29,7 +29,7 @@ class FKLStreamerApp(FastAPI):
 
 
 @asynccontextmanager
-async def lifespan(_app: FKLStreamerApp):
+async def lifespan(_app: CyberStreamerApp):
     """Handle application lifespan."""
     await broker.start()
     yield
@@ -37,9 +37,9 @@ async def lifespan(_app: FKLStreamerApp):
     await shutdown_fraud_service()
 
 
-app = FKLStreamerApp(
-    title="FKLStreamerApp",
-    description="FKLStreamerApp",
+app = CyberStreamerApp(
+    title="CyberStreamerApp",
+    description="CyberStreamerApp",
     version="0.3.0",
     contact="Stef",
     lifespan=lifespan,

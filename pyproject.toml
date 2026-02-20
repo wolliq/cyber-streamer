@@ -1,7 +1,7 @@
 [project]
-name = "fkl-streamer"
+name = "cyber-streamer"
 version = "0.3.0"
-description = "FastAPI streamer from Kafka to Lakehouse on delta lake"
+description = "Cyber Streamer"
 readme = "README.md"
 requires-python = ">=3.12"
 authors = [

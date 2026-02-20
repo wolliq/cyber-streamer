@@ -24,7 +24,7 @@ precommit:
 
 # run the tests
 test:
-	KAFKA_SASL_USER=dummy KAFKA_SASL_PASSWORD=dummy PYTHONPATH=src uv run python -m pytest -s tests/
+	KAFKA_SASL_USER=dummy KAFKA_SASL_PASSWORD=dummy PYTHONPATH=src uv run python -m pytest tests/
 
 # Run Kafka in a Docker container
 kafka-server:

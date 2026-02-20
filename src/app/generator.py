@@ -107,19 +107,26 @@ class EventGenerator:
         """Simulate a bot attack: Rapid logins followed by buys."""
         logger.info(f"--- Starting BOT ATTACK Scenario on {target_user} ---")
 
+        events = []
         # 1. Rapid Logins (High Frequency)
         for _ in range(15):
             topic, event = self.generate_login(user_id=target_user, is_bot=True)
             self.produce(topic, event)
+            events.append(event)
             # Sleep tiny amount to ensure order but still be fast
             time.sleep(0.05)
 
-        logger.info(f"Sent 15 login events for {target_user}")
+        logger.info(
+            f"Sent 15 login events for {target_user}: {json.dumps(events, indent=2, default=str)}\n"
+        )
 
         # 2. Illogical Buy
         topic, event = self.generate_buy(user_id=target_user)
         self.produce(topic, event)
-        logger.info(f"Sent buy event for {target_user}")
+        events.append(event)
+        logger.info(
+            f"Sent buy event for {target_user}: {json.dumps(event, indent=2, default=str)}\n"
+        )
 
         self.flush()
 

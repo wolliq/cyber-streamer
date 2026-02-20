@@ -74,6 +74,11 @@ class FraudService:
                 current_count,
                 user_id,
             )
+            for parsed_event in parsed_events:
+                logger.info(
+                    "Event sent to LLM: {}", json.dumps(parsed_event, default=str)
+                )
+
             result = await self.ollama.analyze_behavior(parsed_events)
 
             if result.score >= 0.6:

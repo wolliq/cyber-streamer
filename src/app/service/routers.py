@@ -27,7 +27,7 @@ async def shutdown_fraud_service():
 
 async def handle_user_event(event: User):
     """Handle user event."""
-    logger.info("Received user event: %s", event)
+    logger.info("Received user event: {}", event)
     df = pl.DataFrame([event.model_dump()])
     df.write_delta(
         target="lakehouse/bronze/user",
@@ -38,7 +38,7 @@ async def handle_user_event(event: User):
 
 async def handle_order_event(event: Order):
     """Handle order event."""
-    logger.info("Received order event: %s", event)
+    logger.info("Received order event: {}", event)
     df = pl.DataFrame([event.model_dump()])
     df.write_delta(
         target="lakehouse/bronze/order",
@@ -49,7 +49,7 @@ async def handle_order_event(event: Order):
 
 async def handle_article_event(event: Article):
     """Handle article event."""
-    logger.info("Received article event: %s", event)
+    logger.info("Received article event: {}", event)
     df = pl.DataFrame([event.model_dump()])
     df.write_delta(
         target="lakehouse/bronze/article",
@@ -60,7 +60,7 @@ async def handle_article_event(event: Article):
 
 async def handle_login_event(event: Login):
     """Handle login event."""
-    logger.info("Received login event: %s", event)
+    logger.info("Received login event: {}", event)
     df = pl.DataFrame([event.model_dump()])
     df.write_delta(
         target="lakehouse/bronze/login",
@@ -72,7 +72,7 @@ async def handle_login_event(event: Login):
 
 async def handle_buy_event(event: Buy):
     """Handle buy event."""
-    logger.info("Received buy event: %s", event)
+    logger.info("Received buy event: {}", event)
     df = pl.DataFrame([event.model_dump()])
     df.write_delta(
         target="lakehouse/bronze/buy",
@@ -84,7 +84,7 @@ async def handle_buy_event(event: Buy):
 
 async def handle_scroll_event(event: Scroll):
     """Handle scroll event."""
-    logger.info("Received scroll event: %s", event)
+    logger.info("Received scroll event: {}", event)
     df = pl.DataFrame([event.model_dump()])
     df.write_delta(
         target="lakehouse/bronze/scroll",

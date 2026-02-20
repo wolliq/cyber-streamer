@@ -350,6 +350,65 @@ wheels = [
 ]
 
 [[package]]
+name = "cyber-streamer"
+version = "0.3.0"
+source = { editable = "." }
+dependencies = [
+    { name = "aiokafka" },
+    { name = "confluent-kafka" },
+    { name = "deltalake" },
+    { name = "fastapi", extra = ["standard"] },
+    { name = "faststream", extra = ["cli"] },
+    { name = "loguru" },
+    { name = "pandas" },
+    { name = "polars" },
+    { name = "pre-commit" },
+    { name = "pydantic" },
+    { name = "redis" },
+    { name = "requests" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "bandit" },
+    { name = "mypy" },
+    { name = "protobuf" },
+    { name = "pylint" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+    { name = "types-requests" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aiokafka", specifier = ">=0.12.0" },
+    { name = "confluent-kafka", specifier = ">=2.8.0" },
+    { name = "deltalake", specifier = ">=0.24.0" },
+    { name = "fastapi", extras = ["standard"], specifier = ">=0.115.8" },
+    { name = "faststream", extras = ["cli"], specifier = ">=0.5.34" },
+    { name = "loguru", specifier = ">=0.7.2" },
+    { name = "pandas", specifier = ">=2.2.3" },
+    { name = "polars", specifier = ">=1.21.0" },
+    { name = "pre-commit", specifier = ">=4.5.1" },
+    { name = "pydantic", specifier = ">=2.10.6" },
+    { name = "redis", specifier = ">=5.0.0" },
+    { name = "requests", specifier = ">=2.32.3" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "bandit", specifier = ">=1.8.0" },
+    { name = "mypy", specifier = ">=1.15.0" },
+    { name = "protobuf", specifier = ">=6.33.5" },
+    { name = "pylint", specifier = ">=3.3.4" },
+    { name = "pytest", specifier = ">=8.3.4" },
+    { name = "pytest-cov", specifier = ">=6.0.0" },
+    { name = "ruff", specifier = ">=0.9.6" },
+    { name = "types-requests", specifier = ">=2.32.0.20241016" },
+]
+
+[[package]]
 name = "deltalake"
 version = "1.4.2"
 source = { registry = "https://pypi.org/simple" }
@@ -599,65 +658,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/00/cd/fa3ab025a8f9772e8a9146d8fd8eef6d62649274d231ca84249f54a0de4a/filelock-3.24.0.tar.gz", hash = "sha256:aeeab479339ddf463a1cdd1f15a6e6894db976071e5883efc94d22ed5139044b", size = 37166, upload-time = "2026-02-14T16:05:28.723Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d9/dd/d7e7f4f49180e8591c9e1281d15ecf8e7f25eb2c829771d9682f1f9fe0c8/filelock-3.24.0-py3-none-any.whl", hash = "sha256:eebebb403d78363ef7be8e236b63cc6760b0004c7464dceaba3fd0afbd637ced", size = 23977, upload-time = "2026-02-14T16:05:27.578Z" },
-]
-
-[[package]]
-name = "fkl-streamer"
-version = "0.3.0"
-source = { editable = "." }
-dependencies = [
-    { name = "aiokafka" },
-    { name = "confluent-kafka" },
-    { name = "deltalake" },
-    { name = "fastapi", extra = ["standard"] },
-    { name = "faststream", extra = ["cli"] },
-    { name = "loguru" },
-    { name = "pandas" },
-    { name = "polars" },
-    { name = "pre-commit" },
-    { name = "pydantic" },
-    { name = "redis" },
-    { name = "requests" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "bandit" },
-    { name = "mypy" },
-    { name = "protobuf" },
-    { name = "pylint" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "ruff" },
-    { name = "types-requests" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "aiokafka", specifier = ">=0.12.0" },
-    { name = "confluent-kafka", specifier = ">=2.8.0" },
-    { name = "deltalake", specifier = ">=0.24.0" },
-    { name = "fastapi", extras = ["standard"], specifier = ">=0.115.8" },
-    { name = "faststream", extras = ["cli"], specifier = ">=0.5.34" },
-    { name = "loguru", specifier = ">=0.7.2" },
-    { name = "pandas", specifier = ">=2.2.3" },
-    { name = "polars", specifier = ">=1.21.0" },
-    { name = "pre-commit", specifier = ">=4.5.1" },
-    { name = "pydantic", specifier = ">=2.10.6" },
-    { name = "redis", specifier = ">=5.0.0" },
-    { name = "requests", specifier = ">=2.32.3" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "bandit", specifier = ">=1.8.0" },
-    { name = "mypy", specifier = ">=1.15.0" },
-    { name = "protobuf", specifier = ">=6.33.5" },
-    { name = "pylint", specifier = ">=3.3.4" },
-    { name = "pytest", specifier = ">=8.3.4" },
-    { name = "pytest-cov", specifier = ">=6.0.0" },
-    { name = "ruff", specifier = ">=0.9.6" },
-    { name = "types-requests", specifier = ">=2.32.0.20241016" },
 ]
 
 [[package]]
