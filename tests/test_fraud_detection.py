@@ -7,7 +7,7 @@ import logging
 
 from app.models.fraud import User, Order
 from app.service.fraud_service import FraudService
-from app.service.ollama_provider import FraudResult
+from app.service.llm_provider import FraudResult
 
 
 class TestFraudModels(unittest.TestCase):
@@ -48,10 +48,10 @@ class TestFraudService(unittest.IsolatedAsyncioTestCase):
         self.logger = logging.getLogger("app.service.fraud_service")
 
     @patch("app.service.fraud_service.redis.from_url")
-    @patch("app.service.fraud_service.OllamaProvider")
+    @patch("app.service.fraud_service.LLMProvider")
     @patch("app.service.fraud_service._write_fraud_score")
     async def test_process_event_threshold_breach(
-        self, mock_write, mock_ollama_cls, mock_redis_from_url
+        self, mock_write, mock_llm_cls, mock_redis_from_url
     ):
         """Test processing event resulting in fraud check."""
         # 1. Mock Redis
@@ -76,9 +76,9 @@ class TestFraudService(unittest.IsolatedAsyncioTestCase):
         )
         mock_redis.setex = AsyncMock()
 
-        # 2. Mock Ollama
-        mock_ollama_instance = mock_ollama_cls.return_value
-        mock_ollama_instance.analyze_behavior = AsyncMock(
+        # 2. Mock LLM
+        mock_llm_instance = mock_llm_cls.return_value
+        mock_llm_instance.analyze_behavior = AsyncMock(
             return_value=FraudResult(
                 score=0.85, reason="Suspicious activity", is_critical=False
             )
@@ -99,8 +99,8 @@ class TestFraudService(unittest.IsolatedAsyncioTestCase):
         # Threshold met (10), so ZRange called
         mock_redis.zrange.assert_called()
 
-        # Ollama called
-        mock_ollama_instance.analyze_behavior.assert_called()
+        # LLM called
+        mock_llm_instance.analyze_behavior.assert_called()
 
         # Write score called
         mock_write.assert_called_once()
@@ -109,10 +109,10 @@ class TestFraudService(unittest.IsolatedAsyncioTestCase):
         mock_redis.setex.assert_called_with(f"last_alert:{self.user_id}", 120, "1")
 
     @patch("app.service.fraud_service.redis.from_url")
-    @patch("app.service.fraud_service.OllamaProvider")
+    @patch("app.service.fraud_service.LLMProvider")
     @patch("app.service.fraud_service._write_fraud_score")
     async def test_process_event_no_threshold(
-        self, mock_write, mock_ollama_cls, mock_redis_from_url
+        self, mock_write, mock_llm_cls, mock_redis_from_url
     ):
         """Test processing event below threshold."""
         mock_redis = MagicMock()
@@ -133,8 +133,8 @@ class TestFraudService(unittest.IsolatedAsyncioTestCase):
         event = {"event_type": "login", "user_id": self.user_id}
         await service.process_event(self.user_id, event)
 
-        # Ollama NOT called
-        mock_ollama_cls.return_value.analyze_behavior.assert_not_called()
+        # LLM NOT called
+        mock_llm_cls.return_value.analyze_behavior.assert_not_called()
 
         # Write score NOT called
         mock_write.assert_not_called()

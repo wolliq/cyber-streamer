@@ -8,19 +8,21 @@ import datetime
 import redis.asyncio as redis
 from loguru import logger
 
-from app.constants import REDIS_URL
+from app.constants import settings
 from app.models.fraud import FraudScore
 from app.processor.silver_proc import _write_fraud_score
-from app.service.ollama_provider import OllamaProvider, FraudResult
+from app.service.llm_provider import LLMProvider, FraudResult
 
 
 class FraudService:
-    """Orchestrates the Hot Path (Redis) and Intelligence (Ollama)."""
+    """Orchestrates the Hot Path (Redis) and Intelligence (LLM)."""
 
-    def __init__(self, redis_url: str = REDIS_URL):
+    def __init__(self, redis_url: str | None = None):
         """Initialize FraudService."""
-        self.redis = redis.from_url(redis_url, decode_responses=True)
-        self.ollama = OllamaProvider()
+        self.redis = redis.from_url(
+            redis_url or settings.REDIS_URL, decode_responses=True
+        )
+        self.llm = LLMProvider()
         self.window_seconds = 120  # 2 minutes
         self.threshold_count = 10
 
@@ -79,7 +81,7 @@ class FraudService:
                     "Event sent to LLM: {}", json.dumps(parsed_event, default=str)
                 )
 
-            result = await self.ollama.analyze_behavior(parsed_events)
+            result = await self.llm.analyze_behavior(parsed_events)
 
             if result.score >= 0.6:
                 await self._handle_fraud_detection(user_id, result)
@@ -107,4 +109,4 @@ class FraudService:
     async def close(self):
         """Close resources."""
         await self.redis.close()
-        await self.ollama.close()
+        await self.llm.close()

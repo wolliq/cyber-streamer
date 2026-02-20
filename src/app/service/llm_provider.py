@@ -1,4 +1,4 @@
-"""Ollama provider module."""
+"""LLM provider module."""
 
 import asyncio
 import json
@@ -8,7 +8,7 @@ from typing import List
 
 import httpx
 from loguru import logger
-from app.constants import OLLAMA_URL, OLLAMA_MODEL
+from app.constants import settings
 
 
 @dataclass
@@ -20,21 +20,21 @@ class FraudResult:
     is_critical: bool
 
 
-class OllamaProvider:
-    """Manages interactions with local Ollama instance with concurrency control."""
+class LLMProvider:
+    """Manages interactions with local LLM instance with concurrency control."""
 
     def __init__(
         self,
-        base_url: str = OLLAMA_URL,
-        model: str = OLLAMA_MODEL,
+        base_url: str = settings.OLLAMA_URL,
+        model: str = settings.OLLAMA_MODEL,
         concurrency_limit: int = 5,
     ):
-        """Initialize OllamaProvider."""
+        """Initialize LLMProvider."""
         self.base_url = base_url
         self.model = model
         # Semaphore acts as a token bucket to limit concurrent queries
         self.semaphore = asyncio.Semaphore(concurrency_limit)
-        self.client = httpx.AsyncClient(timeout=30.0)
+        self.client = httpx.AsyncClient(timeout=120.0)
 
     async def analyze_behavior(self, events: List[dict]) -> FraudResult:
         """Analyze a batch of events using the LLM."""
@@ -58,6 +58,7 @@ class OllamaProvider:
 
             # Parse response
             response_text = data.get("response", "{}")
+
             try:
                 parsed = json.loads(response_text)
                 score = float(parsed.get("score", 0.0))
@@ -69,11 +70,11 @@ class OllamaProvider:
             return FraudResult(score=score, reason=reason, is_critical=score >= 1.0)
 
         except httpx.RequestError as e:
-            logger.error("Ollama connection failed: %s", e)
+            logger.error("LLM connection failed: %s", e)
             # Fail safe
             return FraudResult(0.0, f"Connection Error: {str(e)}", False)
         except Exception as e:  # pylint: disable=broad-exception-caught
-            logger.error("Ollama inference failed: %s", e)
+            logger.error("LLM inference failed: %s", e)
             return FraudResult(0.0, f"Inference Error: {str(e)}", False)
 
     def _build_system_prompt(self, events: List[dict]) -> str:

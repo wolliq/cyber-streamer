@@ -1,16 +1,32 @@
 """Constants module."""
 
 import ssl
-from os import environ
+
+# pylint: disable=invalid-name
 
 from faststream.security import SASLPlaintext
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from app.utils import strtobool
 
-KAFKA_BROKERS = environ.get("KAFKA_BROKERS")
-KAFKA_SASL_AUTH_ENABLED = strtobool(environ.get("KAFKA_SASL_AUTH_ENABLED", "True"))
-KAFKA_SASL_USER = environ.get("KAFKA_SASL_USER")
-KAFKA_SASL_PASSWORD = environ.get("KAFKA_SASL_PASSWORD")
+class Settings(BaseSettings):
+    """Application settings loaded from environment or .env file."""
+
+    KAFKA_BROKERS: str = "localhost:9092"
+    KAFKA_SASL_AUTH_ENABLED: bool = True
+    KAFKA_SASL_USER: str | None = None
+    KAFKA_SASL_PASSWORD: str | None = None
+
+    OLLAMA_URL: str = "http://localhost:11434"
+    OLLAMA_MODEL: str = "mistral:latest"
+    REDIS_URL: str = "redis://localhost:6379"
+    HUGGING_FACE_HUB_TOKEN: str | None = None
+
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", extra="ignore"
+    )
+
+
+settings = Settings()
 
 KAFKA_CONFIG: dict = {
     "api.version.request": "true",
@@ -23,13 +39,15 @@ KAFKA_CONFIG: dict = {
 
 SSL_CONTEXT = ssl.create_default_context()
 SECURITY = None
-if KAFKA_SASL_AUTH_ENABLED:
-    if not KAFKA_SASL_USER or not KAFKA_SASL_PASSWORD:
+if settings.KAFKA_SASL_AUTH_ENABLED:
+    if not settings.KAFKA_SASL_USER or not settings.KAFKA_SASL_PASSWORD:
         raise ValueError(
             "Kafka SASL credentials are required when SASL auth is enabled"
         )
-    security = SASLPlaintext(
-        username=KAFKA_SASL_USER, password=KAFKA_SASL_PASSWORD, use_ssl=True
+    SECURITY = SASLPlaintext(
+        username=settings.KAFKA_SASL_USER,
+        password=settings.KAFKA_SASL_PASSWORD,
+        use_ssl=True,
     )
 
 TOPIC_USER = "user-events"
@@ -38,7 +56,3 @@ TOPIC_ORDER = "order-events"
 TOPIC_LOGIN = "login-events"
 TOPIC_BUY = "buy-events"
 TOPIC_SCROLL = "scroll-events"
-
-OLLAMA_URL = environ.get("OLLAMA_URL", "http://localhost:11434")
-OLLAMA_MODEL = environ.get("OLLAMA_MODEL", "llama3")
-REDIS_URL = environ.get("REDIS_URL", "redis://localhost:6379")

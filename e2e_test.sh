@@ -51,6 +51,10 @@ wait_for_kafka_ready() {
 
 wait_for_kafka_ready
 
+# Pre-pull micro model for faster testing
+echo "[1.5/5] Pre-pulling Micro LLM Model (qwen2.5:0.5b)..."
+curl -X POST http://localhost:11434/api/pull -d '{"name": "qwen2.5:0.5b"}'
+
 # 2. Add Topics (Idempotent)
 echo "[2/5] Creating Kafka Topics..."
 docker compose exec kafka kafka-topics --bootstrap-server localhost:9092 --create --topic user-events --partitions 1 --if-not-exists
@@ -65,7 +69,7 @@ if [ ! -f .envrc ]; then
   cp .envrc_docker .envrc
 fi
 docker compose build fastapi
-docker compose up -d fastapi
+OLLAMA_MODEL="qwen2.5:0.5b" docker compose up -d fastapi
 
 echo "Waiting for App health check..."
 for i in {1..30}; do
@@ -88,17 +92,24 @@ echo "[4/5] Running Traffic Generator (Bot Attack)..."
 docker compose run --rm \
   -e KAFKA_BROKERS=kafka:9092 \
   -e KAFKA_SASL_AUTH_ENABLED=False \
+  -e OLLAMA_MODEL="qwen2.5:0.5b" \
   fastapi \
   uv run python -m app.generator --mode bot
 
-# Sleep a bit to let the app process events
-echo "Waiting for processing..."
-sleep 5
-
-# 5. Verify Output
+# Wait for processing and Verify Output
 echo "[5/5] Verifying Fraud Detection..."
-# Check logs from the container
-if docker logs cyber-streamer 2>&1 | grep -q "Fraud Detected"; then
+echo "Waiting for processing (up to 120s)..."
+
+FRAUD_DETECTED=false
+for i in {1..24}; do
+  if docker logs cyber-streamer 2>&1 | grep -q "Fraud Detected"; then
+    FRAUD_DETECTED=true
+    break
+  fi
+  sleep 5
+done
+
+if [ "$FRAUD_DETECTED" = true ]; then
   echo "✅ SUCCESS: Fraud Detected in logs."
   docker logs cyber-streamer 2>&1 | grep "Fraud Detected"
 else

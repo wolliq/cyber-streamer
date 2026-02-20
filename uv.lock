@@ -364,6 +364,7 @@ dependencies = [
     { name = "polars" },
     { name = "pre-commit" },
     { name = "pydantic" },
+    { name = "pydantic-settings" },
     { name = "redis" },
     { name = "requests" },
 ]
@@ -392,6 +393,7 @@ requires-dist = [
     { name = "polars", specifier = ">=1.21.0" },
     { name = "pre-commit", specifier = ">=4.5.1" },
     { name = "pydantic", specifier = ">=2.10.6" },
+    { name = "pydantic-settings", specifier = ">=2.13.0" },
     { name = "redis", specifier = ">=5.0.0" },
     { name = "requests", specifier = ">=2.32.3" },
 ]

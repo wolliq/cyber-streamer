@@ -6,6 +6,7 @@ __pycache__/
 venv/
 .venv/
 .env/
+.env
 .envrc
 
 # Ignore JetBrains IDE project files

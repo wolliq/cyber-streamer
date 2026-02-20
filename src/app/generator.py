@@ -16,10 +16,9 @@ from loguru import logger
 from confluent_kafka import Producer
 
 from app.constants import (
-    KAFKA_BROKERS,
-    TOPIC_USER,
-    TOPIC_LOGIN,
     TOPIC_BUY,
+    TOPIC_LOGIN,
+    TOPIC_USER,
 )
 
 # Mock Data
@@ -45,10 +44,17 @@ def delivery_report(err, _msg):
 class EventGenerator:
     """Generate synthetic events and produce to Kafka."""
 
-    def __init__(self, bootstrap_servers: str | None = KAFKA_BROKERS):
+    def __init__(self, bootstrap_servers: str | None = None):
         """Initialize the event generator."""
+        # Use settings if no bootstrap servers provided
+        from app.constants import settings  # pylint: disable=import-outside-toplevel
+
         self.producer = Producer(
-            {"bootstrap.servers": bootstrap_servers or "localhost:9092"}
+            {
+                "bootstrap.servers": bootstrap_servers
+                or settings.KAFKA_BROKERS
+                or "localhost:9092"
+            }
         )
 
     def produce(self, topic: str, data: dict):

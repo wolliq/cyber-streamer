@@ -1,22 +1,21 @@
-"""Tests for Ollama provider."""
+"""Tests for LLM provider."""
 
 import unittest
 from unittest.mock import MagicMock, AsyncMock
 import httpx
-from app.service.ollama_provider import OllamaProvider, FraudResult
+from app.service.llm_provider import LLMProvider, FraudResult
 
 
-class TestOllamaProvider(unittest.IsolatedAsyncioTestCase):
-    """Test OllamaProvider."""
+class TestLLMProvider(unittest.IsolatedAsyncioTestCase):
+    """Test LLMProvider."""
 
     def setUp(self):
         """Set up test fixtures."""
-        self.provider = OllamaProvider(base_url="http://test:11434", model="test-model")
+        self.provider = LLMProvider(base_url="http://test:8000", model="test-model")
 
     async def test_analyze_behavior_success(self):
         """Test successful analysis."""
         mock_response = MagicMock()
-        mock_response.status_code = 200
         mock_response.json.return_value = {
             "response": '{"score": 0.9, "reason": "bad"}'
         }
@@ -34,7 +33,6 @@ class TestOllamaProvider(unittest.IsolatedAsyncioTestCase):
     async def test_analyze_behavior_critical(self):
         """Test critical fraud."""
         mock_response = MagicMock()
-        mock_response.status_code = 200
         mock_response.json.return_value = {
             "response": '{"score": 1.0, "reason": "very bad"}'
         }
@@ -57,7 +55,6 @@ class TestOllamaProvider(unittest.IsolatedAsyncioTestCase):
     async def test_analyze_behavior_json_error(self):
         """Test JSON parse error from LLM."""
         mock_response = MagicMock()
-        mock_response.status_code = 200
         mock_response.json.return_value = {"response": "not json"}
 
         self.provider.client.post = AsyncMock(return_value=mock_response)

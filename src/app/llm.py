@@ -7,13 +7,15 @@ from typing import Optional
 import requests
 from loguru import logger
 
-from app.constants import OLLAMA_URL, OLLAMA_MODEL
+from app.constants import settings
 
 
 class OllamaClient:
     """Client for interacting with Ollama API."""
 
-    def __init__(self, base_url: str = OLLAMA_URL, model: str = OLLAMA_MODEL):
+    def __init__(
+        self, base_url: str = settings.OLLAMA_URL, model: str = settings.OLLAMA_MODEL
+    ):
         """Initialize Ollama client."""
         self.base_url = base_url
         self.model = model
@@ -28,7 +30,7 @@ class OllamaClient:
                 "stream": False,
                 "format": "json",
             }
-            response = requests.post(url, json=payload, timeout=30)
+            response = requests.post(url, json=payload, timeout=120)
             response.raise_for_status()
 
             result = response.json()
